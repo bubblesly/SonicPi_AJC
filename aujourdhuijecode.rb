@@ -182,6 +182,7 @@ end
 bpm = 100
 lfo = Lfo.new(self, 0.5)
 synth = Synth.new(self, lfo, 70, 130, 0.9, 0.25)
+synthNotes = [:none, :n_16th, :c4, :n_16th, :a2, :n_8th, :a3, :n_8th, :a2 , :n_8th, :c3, :n_8th, :d3, :n_16th, :e3, :n_8th_dotted, :a2, :n_8th]
 
 kick    = Sample.new(self, :drum_heavy_kick)
 snare   = Sample.new(self, :drum_snare_hard)
@@ -189,16 +190,14 @@ pedalHh = Sample.new(self, :drum_cymbal_pedal)
 openHh  = Sample.new(self, :drum_cymbal_open, a: 0, d: 0.25, s: 0, r: 0)
 
 intro = Pattern.new(self, :intro, :intro_played)
-intro.addSequence(Sequence.new(self, synth,   [:none, :n_16th, :c4, :n_16th, :a2, :n_8th, :a3, :n_8th, :a2 , :n_8th, :c3, :n_8th, :d3, :n_16th, :e3, :n_8th_dotted, :a2, :n_8th], 4))
-
-
+intro.addSequence(Sequence.new(self, synth, synthNotes, 4))
 
 verse = Pattern.new(self, :verse, :verse_played)
 verse.addSequence(Sequence.new(self, kick,    [:x, :n_8th, :o, :n_8th, :x, :n_8th, :o, :n_8th, :x, :n_8th, :o, :n_8th, :x, :n_8th, :o, :n_8th], 8))
 verse.addSequence(Sequence.new(self, snare,   [:o, :n_8th, :o, :n_8th, :x, :n_8th, :o, :n_8th, :o, :n_8th, :o, :n_8th, :x, :n_8th, :o, :n_8th], 8))
 verse.addSequence(Sequence.new(self, pedalHh, [:x, :n_8th, :o, :n_8th, :x, :n_8th, :o, :n_8th, :x, :n_8th, :o, :n_8th, :x, :n_8th, :o, :n_8th], 8))
 verse.addSequence(Sequence.new(self, openHh,  [:o, :n_8th, :o, :n_8th, :o, :n_8th, :o, :n_8th, :o, :n_8th, :o, :n_8th, :o, :n_8th, :x, :n_8th], 8))
-verse.addSequence(Sequence.new(self, synth,   [:none, :n_16th, :c4, :n_16th, :a2, :n_8th, :a3, :n_8th, :a2 , :n_8th, :c3, :n_8th, :d3, :n_16th, :e3, :n_8th_dotted, :a2, :n_8th], 8))
+verse.addSequence(Sequence.new(self, synth,   synthNotes, 8))
 
 
 intro.play(bpm)

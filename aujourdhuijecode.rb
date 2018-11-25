@@ -98,25 +98,24 @@ class Sequence
   end
   
   def play(bpm)
+    @parent.use_bpm bpm
     if @repetitions > 0
-      repeat(@repetitions, bpm)
+      repeat(@repetitions)
     else
-      seqLoop(bpm)
+      seqLoop()
     end
   end
   
-  def seqLoop(bpm)
+  def seqLoop()
     @parent.in_thread do
-      @parent.use_bpm bpm
-      while !played?
+      loop do
         playNextNote()
       end
     end
   end
   
-  def repeat(r, bpm)
+  def repeat(r)
     @parent.in_thread do
-      @parent.use_bpm bpm
       (r * @seq.size * 0.5).times do
         playNextNote()
       end

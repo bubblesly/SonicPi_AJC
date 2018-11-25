@@ -19,24 +19,41 @@ class Lfo
 end
 
 class Synth
-  def initialize(parent, lfo, cutoff_min, cutoff_max, res, note_length)
+  def initialize(parent, lfo, cutoff_min, cutoff_max, res, note_length, effects)
     @parent = parent
+    @lfo = lfo
     @cutoff_min = cutoff_min
     @cutoff_max = cutoff_max
     @res = res
-    @lfo = lfo
+    @note_length = note_length
+    @cutoff = @cutoff_min
+    @effects = effects
+  end
+  
+  def doPlay(n)
+    @parent.play(n,
+                 attack: 0.0, decay: @note_length, sustain: 0, sustain_level: 0, release: 0,
+                 cutoff_attack: 0.1, cutoff_decay: 0.2, cutoff_sustain: 0, cutoff_release: 0,
+                 wave: :square, cutoff: @cutoff, res: @res)
+  end
+  
+  def applyFxAndPlay(fxPos, n)
+    if(fxPos >= @effects.size)
+      doPlay(n)
+    else
+      @parent.with_fx @effects[fxPos] do
+        applyFxAndPlay(fxPos + 1, n)
+      end
+    end
   end
   
   def play(n)
     if n != :none then
       @parent.use_synth :tb303
-      @cutoff = (@lfo.look() + 1) * 0.5 * (@cutoff_max - @cutoff_min) + @cutoff_min
-      @parent.with_fx :distortion do
-        @parent.play(n,
-                     attack: 0.0, decay: 0.25, sustain: 0, sustain_level: 0, release: 0,
-                     cutoff_attack: 0.1, cutoff_decay: 0.2, cutoff_sustain: 0, cutoff_release: 0,
-                     wave: :square, cutoff: @cutoff, res: @res)
+      if(@lfo != nil)
+        @cutoff = (@lfo.look() + 1) * 0.5 * (@cutoff_max - @cutoff_min) + @cutoff_min
       end
+      applyFxAndPlay(0, n)
     end
   end
   
@@ -180,29 +197,42 @@ end
 
 
 bpm = 100
+
 lfo = Lfo.new(self, 0.5)
-synth = Synth.new(self, lfo, 70, 130, 0.9, 0.25)
+synth = Synth.new(self, lfo, 70, 130, 0.9, 0.25, [:distortion])
+#  This lick is a 1 bar sequence
 synthNotes = [:none, :n_16th, :c4, :n_16th, :a2, :n_8th, :a3, :n_8th, :a2 , :n_8th, :c3, :n_8th, :d3, :n_16th, :e3, :n_8th_dotted, :a2, :n_8th]
+
+bass = Synth.new(self, nil, 90, 90, 0.4, 1, [:reverb])
+# The bass line is a 8 bars sequence
+bassNotes = []
+16.times do bassNotes += [:a1, :n_q] end
+8.times do bassNotes += [:f1, :n_q] end
+8.times do bassNotes += [:d1, :n_q] end
+
 
 kick    = Sample.new(self, :drum_heavy_kick)
 snare   = Sample.new(self, :drum_snare_hard)
 pedalHh = Sample.new(self, :drum_cymbal_pedal)
 openHh  = Sample.new(self, :drum_cymbal_open, a: 0, d: 0.25, s: 0, r: 0)
 
+# The intro is a 4 bars pattern
 intro = Pattern.new(self, :intro, :intro_played)
 intro.addSequence(Sequence.new(self, synth, synthNotes, 4))
 
+# The verse is a 16 bars pattern
 verse = Pattern.new(self, :verse, :verse_played)
-verse.addSequence(Sequence.new(self, kick,    [:x, :n_8th, :o, :n_8th, :x, :n_8th, :o, :n_8th, :x, :n_8th, :o, :n_8th, :x, :n_8th, :o, :n_8th], 8))
-verse.addSequence(Sequence.new(self, snare,   [:o, :n_8th, :o, :n_8th, :x, :n_8th, :o, :n_8th, :o, :n_8th, :o, :n_8th, :x, :n_8th, :o, :n_8th], 8))
-verse.addSequence(Sequence.new(self, pedalHh, [:x, :n_8th, :o, :n_8th, :x, :n_8th, :o, :n_8th, :x, :n_8th, :o, :n_8th, :x, :n_8th, :o, :n_8th], 8))
-verse.addSequence(Sequence.new(self, openHh,  [:o, :n_8th, :o, :n_8th, :o, :n_8th, :o, :n_8th, :o, :n_8th, :o, :n_8th, :o, :n_8th, :x, :n_8th], 8))
-verse.addSequence(Sequence.new(self, synth,   synthNotes, 8))
-
+verse.addSequence(Sequence.new(self, kick,    [:x, :n_8th, :o, :n_8th, :x, :n_8th, :o, :n_8th, :x, :n_8th, :o, :n_8th, :x, :n_8th, :o, :n_8th], 16))
+verse.addSequence(Sequence.new(self, snare,   [:o, :n_8th, :o, :n_8th, :x, :n_8th, :o, :n_8th, :o, :n_8th, :o, :n_8th, :x, :n_8th, :o, :n_8th], 16))
+verse.addSequence(Sequence.new(self, pedalHh, [:x, :n_8th, :o, :n_8th, :x, :n_8th, :o, :n_8th, :x, :n_8th, :o, :n_8th, :x, :n_8th, :o, :n_8th], 16))
+verse.addSequence(Sequence.new(self, openHh,  [:o, :n_8th, :o, :n_8th, :o, :n_8th, :o, :n_8th, :o, :n_8th, :o, :n_8th, :o, :n_8th, :x, :n_8th], 16))
+verse.addSequence(Sequence.new(self, synth,   synthNotes, 16))
+verse.addSequence(Sequence.new(self, bass,    bassNotes, 2)) # must be played twice to get 16 bars
 
 intro.play(bpm)
 sync :intro_played
 verse.play(bpm)
 sync :verse_played
+
 
 
